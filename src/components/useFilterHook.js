@@ -2,228 +2,141 @@ import { useState, useEffect } from 'react';
 
 const storage = window.sessionStorage;
 
-
-
 export const useFilterHook = () => {
-    const defaultFilter = (entity) => {
-        return {
-            entity: {
-                search: {},
-                pageable: {
-                    page: 0,
-                    size: 5,
-                    order: 'ASC',
-                    orderBy: 'id',
-                }
-            }
-        }
-    };
-    const [filters, setFilters] = useState(() => {
-        const storedFilters = sessionStorage.getItem('filters');
-        return storedFilters ? JSON.parse(storedFilters) : {};
-    });
-
-    useEffect(() => {
-        const storedFilters = storage.getItem('filters');
-        if (storedFilters) {
-            setFilters(JSON.parse(storedFilters));
-        }
-    }, []);
-    useEffect(() => {
-        storage.setItem('filters', JSON.stringify(filters));
-    }, [filters]);
-    const getFilters = (entity) => {
-        if (Object.keys(filters).length === 0) {
-            setFilters(defaultFilter(entity));
-            return defaultFilter.entity;
-        } else {
-            return filters[entity] || {};
-        }
-    }
-
-    const addFilter = (entity, filterName, filterValue) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                [filterName]: filterValue,
-            },
-        }));
-    };
-
-    const clearFilter = (entity, filterName) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                [filterName]: null,
-            },
-        }));
-    };
-
-    const addSearch = (entity, searchName, searchValue) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                search: {
-                    ...prevFilters[entity]?.search,
-                    [searchName]: searchValue,
-                },
-            },
-        }));
-    };
-
-    const clearSearch = (entity, searchName) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                search: {
-                    ...prevFilters[entity]?.search,
-                    [searchName]: null,
-                },
-            },
-        }));
-    };
-
-    const setPage = (entity, page) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    page,
-                },
-            },
-        }));
-    };
-
-    const setSize = (entity, size) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    size,
-                },
-            },
-        }));
-    };
-
-    const setOrder = (entity, order) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    order,
-                },
-            },
-        }));
-    };
-
-    const setOrderBy = (entity, orderBy) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    orderBy,
-                },
-            },
-        }));
-    };
-
-    const setPagination = (entity, page, size) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    page,
-                    size,
-                },
-            },
-        }));
-    };
-
-    const setTotalPages = (entity, totalPages) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    totalPages,
-                },
-            },
-        }));
-    };
-
-    const setTotalElements = (entity, totalElements) => {
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            [entity]: {
-                ...prevFilters[entity],
-                pageable: {
-                    ...prevFilters[entity]?.pageable,
-                    totalElements,
-                },
-            },
-        }));
-    };
-    const getPageable = (entity) => {
-        const pageable = filters[entity]?.pageable;
-        if (pageable) {
-            return {
-                page: pageable.page,
-                size: pageable.size,
-                order: pageable.order,
-                orderBy: pageable.orderBy,
-                totalPages: pageable.totalPages,
-                totalElements: pageable.totalElements,
-            };
-        } else {
-            return {
+    const defaultFilter = (entity) => ({
+        [entity]: {
+            search: {},
+            pageable: {
                 page: 0,
-                size: 10,
+                size: 5,
                 order: 'ASC',
                 orderBy: 'id',
                 totalPages: 0,
                 totalElements: 0,
-            };
+            }
         }
-    }
+    });
+
+    const [filters, setFilters] = useState(() => {
+        const storedFilters = storage.getItem('filters');
+        return storedFilters ? JSON.parse(storedFilters) : {};
+    });
+
+    useEffect(() => {
+        storage.setItem('filters', JSON.stringify(filters));
+    }, [filters]);
+
+    const getFilters = (entity) => {
+        if (!filters[entity]) {
+            const newFilter = defaultFilter(entity);
+            setFilters((prevFilters) => ({ ...prevFilters, ...newFilter }));
+            return newFilter[entity];
+        }
+        return filters[entity];
+    };
+
+    const updateFilter = (entity, updater) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                ...updater(prevFilters[entity] || defaultFilter(entity)[entity]),
+            },
+        }));
+    };
+
+    const addFilter = (entity, filterName, filterValue) => {
+        updateFilter(entity, (entityFilters) => ({ [filterName]: filterValue }));
+    };
+
+    const clearFilter = (entity, filterName) => {
+        updateFilter(entity, (entityFilters) => ({ [filterName]: null }));
+    };
+
+    const addSearch = (entity, searchName, searchValue) => {
+        updateFilter(entity, (entityFilters) => ({
+            search: { ...entityFilters.search, [searchName]: searchValue },
+        }));
+    };
+
+    const clearSearch = (entity, searchName) => {
+        updateFilter(entity, (entityFilters) => ({
+            search: { ...entityFilters.search, [searchName]: null },
+        }));
+    };
+
+    const setPage = (entity, page) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, page },
+        }));
+    };
+
+    const setSize = (entity, size) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, size },
+        }));
+    };
+
+    const setOrder = (entity, order) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, order },
+        }));
+    };
+
+    const setOrderBy = (entity, orderBy) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, orderBy },
+        }));
+    };
+
+    const setPagination = (entity, page, size) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, page, size },
+        }));
+    };
+
+    const setTotalPages = (entity, totalPages) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, totalPages },
+        }));
+    };
+
+    const setTotalElements = (entity, totalElements) => {
+        updateFilter(entity, (entityFilters) => ({
+            pageable: { ...entityFilters.pageable, totalElements },
+        }));
+    };
+
+    const getPageable = (entity) => {
+        const pageable = getFilters(entity).pageable;
+        return {
+            page: pageable.page,
+            size: pageable.size,
+            order: pageable.order,
+            orderBy: pageable.orderBy,
+            totalPages: pageable.totalPages,
+            totalElements: pageable.totalElements,
+        };
+    };
+
     const getParams = (entity) => {
         const searchParams = new URLSearchParams();
-        const filters = getFilters(entity);
-        if (!filters) {
-            let defaultFilters = defaultFilter(entity);
-            setFilters((prevFilters) => ({
-                ...prevFilters,
-                [entity]: defaultFilters,
-            }));
-        }
-        Object.keys(filters).forEach((key) => {
+        const entityFilters = getFilters(entity);
+
+        Object.entries(entityFilters).forEach(([key, value]) => {
             if (key === 'search') {
-                Object.keys(filters.search).forEach((searchKey) => {
-                    searchParams.append(`search_${searchKey}`, filters.search[searchKey]);
+                Object.entries(value).forEach(([searchKey, searchValue]) => {
+                    searchParams.append(`search_${searchKey}`, searchValue);
                 });
             } else if (key === 'pageable') {
-                searchParams.append('page', filters.pageable['page']);
-                searchParams.append('size', filters.pageable['size']);
-                searchParams.append('order', filters.pageable['order']);
-                searchParams.append('orderBy', filters.pageable['orderBy']);
+                Object.entries(value).forEach(([pageableKey, pageableValue]) => {
+                    searchParams.append(pageableKey, pageableValue);
+                });
             } else {
-                searchParams.append(key, filters[key]);
+                searchParams.append(key, value);
             }
         });
+
         return searchParams;
     };
 
@@ -243,4 +156,4 @@ export const useFilterHook = () => {
         getPageable,
         getParams
     };
-}
+};

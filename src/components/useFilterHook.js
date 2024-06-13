@@ -1,11 +1,27 @@
 import { useState, useEffect } from 'react';
 
-export const useFilterHook = () => {
-    const [filters, setFilters] = useState({});
-    const [search, setSearch] = useState({});
-    const [year, setYear] = useState(null);
+const storage = window.sessionStorage;
 
-    const storage = window.sessionStorage;
+
+
+export const useFilterHook = () => {
+    const defaultFilter = (entity) => {
+        return {
+            entity: {
+                search: {},
+                pageable: {
+                    page: 0,
+                    size: 5,
+                    order: 'ASC',
+                    orderBy: 'id',
+                }
+            }
+        }
+    };
+    const [filters, setFilters] = useState(() => {
+        const storedFilters = sessionStorage.getItem('filters');
+        return storedFilters ? JSON.parse(storedFilters) : {};
+    });
 
     useEffect(() => {
         const storedFilters = storage.getItem('filters');
@@ -13,110 +29,218 @@ export const useFilterHook = () => {
             setFilters(JSON.parse(storedFilters));
         }
     }, []);
-
     useEffect(() => {
         storage.setItem('filters', JSON.stringify(filters));
     }, [filters]);
+    const getFilters = (entity) => {
+        if (Object.keys(filters).length === 0) {
+            setFilters(defaultFilter(entity));
+            return defaultFilter.entity;
+        } else {
+            return filters[entity] || {};
+        }
+    }
 
-    const addFilter = (listName, filterName, filterValue) => {
+    const addFilter = (entity, filterName, filterValue) => {
         setFilters((prevFilters) => ({
             ...prevFilters,
-            [listName]: {
-                ...prevFilters[listName],
+            [entity]: {
+                ...prevFilters[entity],
                 [filterName]: filterValue,
             },
         }));
     };
 
-    const clearFilter = (listName, filterName) => {
+    const clearFilter = (entity, filterName) => {
         setFilters((prevFilters) => ({
             ...prevFilters,
-            [listName]: {
-                ...prevFilters[listName],
+            [entity]: {
+                ...prevFilters[entity],
                 [filterName]: null,
             },
         }));
     };
 
-    const addSearch = (listName, searchName, searchValue) => {
-        setSearch((prevSearch) => ({
-            ...prevSearch,
-            [listName]: {
-                ...prevSearch[listName],
-                [searchName]: searchValue,
-            },
-        }));
-    };
-
-    const clearSearch = (listName, searchName) => {
-        setSearch((prevSearch) => ({
-            ...prevSearch,
-            [listName]: {
-                ...prevSearch[listName],
-                [searchName]: null,
-            },
-        }));
-    };
-
-    const addFilterToSearch = (listName, filterName, searchName, searchValue) => {
-        addFilter(listName, filterName, searchValue);
-        addSearch(listName, searchName, searchValue);
-    };
-
-    const removeFilterFromSearch = (listName, filterName, searchName) => {
-        clearFilter(listName, filterName);
-        clearSearch(listName, searchName);
-    };
-
-    const excludeFilterFromSearch = (listName, filterName, searchName, searchValue) => {
-        clearFilter(listName, filterName);
-        addSearch(listName, searchName, searchValue);
-    };
-
-    const doFilterWithoutYear = (listName) => {
+    const addSearch = (entity, searchName, searchValue) => {
         setFilters((prevFilters) => ({
             ...prevFilters,
-            [listName]: {
-                ...prevFilters[listName],
-                year: null,
-            },
-        }));
-    };
-
-    const setYears = (year) => {
-        setYear(year);
-        setFilters((prevFilters) => ({
-            ...prevFilters,
-            years: {
-                jalaliYear: {
-                    label: year,
-                    value: year,
+            [entity]: {
+                ...prevFilters[entity],
+                search: {
+                    ...prevFilters[entity]?.search,
+                    [searchName]: searchValue,
                 },
             },
         }));
     };
 
-    const getYears = () => {
-        return filters.years.jalaliYear.value;
+    const clearSearch = (entity, searchName) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                search: {
+                    ...prevFilters[entity]?.search,
+                    [searchName]: null,
+                },
+            },
+        }));
     };
 
-    useEffect(() => {
-        console.log("Filters updated:", filters);
-    }, [filters]);
+    const setPage = (entity, page) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    page,
+                },
+            },
+        }));
+    };
+
+    const setSize = (entity, size) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    size,
+                },
+            },
+        }));
+    };
+
+    const setOrder = (entity, order) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    order,
+                },
+            },
+        }));
+    };
+
+    const setOrderBy = (entity, orderBy) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    orderBy,
+                },
+            },
+        }));
+    };
+
+    const setPagination = (entity, page, size) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    page,
+                    size,
+                },
+            },
+        }));
+    };
+
+    const setTotalPages = (entity, totalPages) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    totalPages,
+                },
+            },
+        }));
+    };
+
+    const setTotalElements = (entity, totalElements) => {
+        setFilters((prevFilters) => ({
+            ...prevFilters,
+            [entity]: {
+                ...prevFilters[entity],
+                pageable: {
+                    ...prevFilters[entity]?.pageable,
+                    totalElements,
+                },
+            },
+        }));
+    };
+    const getPageable = (entity) => {
+        const pageable = filters[entity]?.pageable;
+        if (pageable) {
+            return {
+                page: pageable.page,
+                size: pageable.size,
+                order: pageable.order,
+                orderBy: pageable.orderBy,
+                totalPages: pageable.totalPages,
+                totalElements: pageable.totalElements,
+            };
+        } else {
+            return {
+                page: 0,
+                size: 10,
+                order: 'ASC',
+                orderBy: 'id',
+                totalPages: 0,
+                totalElements: 0,
+            };
+        }
+    }
+    const getParams = (entity) => {
+        const searchParams = new URLSearchParams();
+        const filters = getFilters(entity);
+        if (!filters) {
+            let defaultFilters = defaultFilter(entity);
+            setFilters((prevFilters) => ({
+                ...prevFilters,
+                [entity]: defaultFilters,
+            }));
+        }
+        Object.keys(filters).forEach((key) => {
+            if (key === 'search') {
+                Object.keys(filters.search).forEach((searchKey) => {
+                    searchParams.append(`search_${searchKey}`, filters.search[searchKey]);
+                });
+            } else if (key === 'pageable') {
+                searchParams.append('page', filters.pageable['page']);
+                searchParams.append('size', filters.pageable['size']);
+                searchParams.append('order', filters.pageable['order']);
+                searchParams.append('orderBy', filters.pageable['orderBy']);
+            } else {
+                searchParams.append(key, filters[key]);
+            }
+        });
+        return searchParams;
+    };
 
     return {
         filters,
-        search,
-        year,
         addFilter,
         clearFilter,
         addSearch,
         clearSearch,
-        addFilterToSearch,
-        removeFilterFromSearch,
-        excludeFilterFromSearch,
-        doFilterWithoutYear,
-        setYears,
-        getYears,
+        setPage,
+        setSize,
+        setOrder,
+        setOrderBy,
+        setPagination,
+        setTotalPages,
+        setTotalElements,
+        getPageable,
+        getParams
     };
-};
+}

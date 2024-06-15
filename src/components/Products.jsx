@@ -19,10 +19,10 @@ const Products = () => {
     };
 
     const columns = [
-        { key: 'id', title: 'شناسه', width: '5%', sortable: true },
-        { key: 'productCode', title: 'کد محصول', width: '15%', sortable: true, searchable: true },
-        { key: 'productName', title: 'نام محصول', width: '20%', sortable: true, searchable: true },
-        { key: 'measurementIndex', title: 'شاخص اندازه‌گیری', width: '20%', sortable: true, searchable: true },
+        { key: 'id', title: 'ID', width: '5%', sortable: true },
+        { key: 'productCode', title: 'PRODUCT CODE', width: '15%', sortable: true, searchable: true },
+        { key: 'productName', title: 'PRODUCT NAME', width: '20%', sortable: true, searchable: true },
+        { key: 'measurementIndex', title: 'MEASUREMENT INDEX', width: '20%', sortable: true, searchable: true },
     ];
 
     return (
